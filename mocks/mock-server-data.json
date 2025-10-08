@@ -1,0 +1,130 @@
+{
+  "offersBase": [
+    {
+      "title": "Canal-view studio",
+      "description": "Cozy studio with a canal view, close to museums and cafes.",
+      "city": "Amsterdam",
+      "previewImage": "https://pics.example/prev1.jpg",
+      "photos": [
+        "https://pics.example/p1.jpg",
+        "https://pics.example/p2.jpg",
+        "https://pics.example/p3.jpg",
+        "https://pics.example/p4.jpg",
+        "https://pics.example/p5.jpg",
+        "https://pics.example/p6.jpg"
+      ],
+      "type": "apartment",
+      "amenities": ["Breakfast", "Washer", "Towels", "Fridge"],
+      "authorName": "Anna Doe",
+      "authorEmail": "anna@example.com",
+      "authorType": "pro",
+      "authorAvatar": "https://pics.example/anna.png",
+      "coordinates": "52.370216;4.895168"
+    },
+    {
+      "title": "Family house near park",
+      "description": "Spacious family house near the central park with a quiet backyard.",
+      "city": "Hamburg",
+      "previewImage": "https://pics.example/prev2.jpg",
+      "photos": [
+        "https://pics.example/h1.jpg",
+        "https://pics.example/h2.jpg",
+        "https://pics.example/h3.jpg",
+        "https://pics.example/h4.jpg",
+        "https://pics.example/h5.jpg",
+        "https://pics.example/h6.jpg"
+      ],
+      "type": "house",
+      "amenities": ["Air conditioning", "Laptop friendly workspace", "Baby seat", "Fridge"],
+      "authorName": "John Smith",
+      "authorEmail": "jsmith@example.com",
+      "authorType": "regular",
+      "authorAvatar": "",
+      "coordinates": "53.550341;10.000654"
+    },
+    {
+      "title": "Central room",
+      "description": "Budget room right in the city center, walk to everything.",
+      "city": "Paris",
+      "previewImage": "https://pics.example/prev3.jpg",
+      "photos": [
+        "https://pics.example/r1.jpg",
+        "https://pics.example/r2.jpg",
+        "https://pics.example/r3.jpg",
+        "https://pics.example/r4.jpg",
+        "https://pics.example/r5.jpg",
+        "https://pics.example/r6.jpg"
+      ],
+      "type": "room",
+      "amenities": ["Towels", "Fridge"],
+      "authorName": "Claire Dupont",
+      "authorEmail": "claire@example.com",
+      "authorType": "regular",
+      "authorAvatar": "",
+      "coordinates": "48.85661;2.351499"
+    },
+    {
+      "title": "Riverside hotel",
+      "description": "Business-friendly hotel near the riverfront.",
+      "city": "Brussels",
+      "previewImage": "https://pics.example/prev4.jpg",
+      "photos": [
+        "https://pics.example/b1.jpg",
+        "https://pics.example/b2.jpg",
+        "https://pics.example/b3.jpg",
+        "https://pics.example/b4.jpg",
+        "https://pics.example/b5.jpg",
+        "https://pics.example/b6.jpg"
+      ],
+      "type": "hotel",
+      "amenities": ["Breakfast", "Air conditioning", "Washer", "Towels"],
+      "authorName": "Marc De Wilde",
+      "authorEmail": "marc@example.com",
+      "authorType": "pro",
+      "authorAvatar": "https://pics.example/marc.png",
+      "coordinates": "50.846557;4.351697"
+    },
+    {
+      "title": "Cologne loft",
+      "description": "Industrial loft with a stylish interior and open space.",
+      "city": "Cologne",
+      "previewImage": "https://pics.example/prev5.jpg",
+      "photos": [
+        "https://pics.example/c1.jpg",
+        "https://pics.example/c2.jpg",
+        "https://pics.example/c3.jpg",
+        "https://pics.example/c4.jpg",
+        "https://pics.example/c5.jpg",
+        "https://pics.example/c6.jpg"
+      ],
+      "type": "apartment",
+      "amenities": ["Laptop friendly workspace", "Washer", "Fridge"],
+      "authorName": "Peter Braun",
+      "authorEmail": "peter@example.com",
+      "authorType": "regular",
+      "authorAvatar": "",
+      "coordinates": "50.938361;6.959974"
+    },
+    {
+      "title": "Dusseldorf business stay",
+      "description": "Modern place perfect for short business trips.",
+      "city": "Dusseldorf",
+      "previewImage": "https://pics.example/prev6.jpg",
+      "photos": [
+        "https://pics.example/d1.jpg",
+        "https://pics.example/d2.jpg",
+        "https://pics.example/d3.jpg",
+        "https://pics.example/d4.jpg",
+        "https://pics.example/d5.jpg",
+        "https://pics.example/d6.jpg"
+      ],
+      "type": "hotel",
+      "amenities": ["Air conditioning", "Towels", "Fridge"],
+      "authorName": "Sophie Müller",
+      "authorEmail": "sophie@example.com",
+      "authorType": "pro",
+      "authorAvatar": "https://pics.example/sophie.png",
+      "coordinates": "51.225402;6.776314"
+    }
+  ]
+}
