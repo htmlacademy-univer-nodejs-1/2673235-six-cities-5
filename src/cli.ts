@@ -1,79 +1,9 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
-import fs from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
-import readline from 'node:readline';
-import { parseTsvLine } from './utils/tsv.js';
-
-function showHelp(): void {
-  console.log(chalk.cyan.bold('Программа для подготовки данных для REST API сервера.'));
-  console.log('');
-  console.log(chalk.gray('Пример: cli.js --<command> [--arguments]'));
-  console.log('');
-  console.log('Команды:');
-  console.log(`    ${ chalk.green('--version') }           # номер версии`);
-  console.log(`    ${ chalk.green('--help') }              # этот текст`);
-  console.log(`    ${ chalk.green('--import <path>') }     # импорт из TSV`);
-  console.log('');
-}
-
-async function readVersion(): Promise<string> {
-  try {
-    const pkgPath = new URL('../package.json', import.meta.url);
-    const raw = await fs.readFile(pkgPath, 'utf-8');
-    const pkg = JSON.parse(raw);
-    return pkg.version ?? '0.0.0';
-  } catch {
-    return '0.0.0';
-  }
-}
-
-async function importTsv(filePath: string): Promise<void> {
-  const exists = await fs.access(filePath).then(() => true).catch(() => false);
-
-  if (!exists) {
-    console.error(chalk.red(`Файл не найден: ${filePath}`));
-    process.exitCode = 1;
-    return;
-  }
-
-  const rl = readline.createInterface({
-    input: createReadStream(filePath),
-    crlfDelay: Infinity
-  });
-
-  let imported = 0;
-  let headerSkipped = false;
-
-  console.log(chalk.blueBright(`Импорт из: ${filePath}\n`));
-
-  for await (const line of rl) {
-    const trimmed = line.trim();
-    if (trimmed.length === 0) {
-      continue;
-    }
-    if (trimmed.startsWith('#')) {
-      continue;
-    }
-
-    if (!headerSkipped) {
-      headerSkipped = true;
-      continue;
-    }
-
-    const offer = parseTsvLine(trimmed);
-    imported += 1;
-
-    console.log(
-      chalk.bold(offer.title),
-      chalk.gray(`[${offer.city}]`),
-      chalk.yellow(`€${offer.price}`),
-      chalk.gray(`(${offer.type}, rating ${offer.rating})`)
-    );
-  }
-
-  console.log(`\n${ chalk.cyan.bold(`Итого импортировано: ${imported}`)}`);
-}
+import { showHelp } from './commands/help.js';
+import { readVersion } from './commands/version.js';
+import { importTsv } from './commands/import.js';
+import { generateTsv } from './commands/generate.js';
 
 async function main(argv: string[]): Promise<void> {
   const args = argv.slice(2);
@@ -98,7 +28,6 @@ async function main(argv: string[]): Promise<void> {
 
   if (cmd === '--import') {
     const path = args[1];
-
     if (!path) {
       console.error(chalk.red('Укажите путь к TSV файлу: --import <path>'));
       process.exitCode = 1;
@@ -106,6 +35,35 @@ async function main(argv: string[]): Promise<void> {
     }
 
     await importTsv(path);
+    return;
+  }
+
+  if (cmd === '--generate') {
+    const nStr = args[1];
+    const filePath = args[2];
+    const url = args[3];
+
+    if (!nStr || !filePath || !url) {
+      console.error(chalk.red('Использование: --generate <n> <filepath> <url>'));
+      process.exitCode = 1;
+      return;
+    }
+
+    const n = Number(nStr);
+    if (!Number.isInteger(n) || n <= 0) {
+      console.error(chalk.red('n должно быть целым числом > 0'));
+      process.exitCode = 1;
+      return;
+    }
+
+    try {
+      console.log(chalk.blueBright(`Генерация ${n} строк в ${filePath} с базы ${url} ...`));
+      await generateTsv(n, filePath, url);
+      console.log(chalk.green('Готово.'));
+    } catch (e) {
+      console.error(chalk.red('Ошибка генерации:'), (e as Error).message);
+      process.exitCode = 1;
+    }
     return;
   }
 
