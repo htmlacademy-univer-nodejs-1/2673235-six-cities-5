@@ -12,3 +12,5 @@ coverage
 
 mocks/*.tsv
 mocks/generated-*.tsv
+
+.env
