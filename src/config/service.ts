@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import 'dotenv/config';
+import 'dotenv/config.js';
 import convict from 'convict';
 import { url, ipaddress } from 'convict-format-with-validator';
 

@@ -10,5 +10,5 @@ async function bootstrap(): Promise<void> {
 
 bootstrap().catch((e) => {
   console.error('Bootstrap error:', e);
-  process.exit(1);
+  throw e;
 });
