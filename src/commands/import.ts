@@ -2,12 +2,11 @@ import chalk from 'chalk';
 import fs from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import readline from 'node:readline';
-import { Types } from 'mongoose';
 import { parseTsvLine } from '../utils/tsv.js';
 import { container } from '../container/container.js';
 import { TYPES } from '../container/types.js';
 import { DatabaseService } from '../db/database.js';
-import { IUserRepository, IOfferRepository } from '../db/repositories/interfaces.js';
+import { IUserRepository, IOfferRepository, WithId } from '../db/repositories/interfaces.js';
 import { UserDB } from '../db/models/user.js';
 import { OfferDB } from '../db/models/offer.js';
 
@@ -42,8 +41,6 @@ type ParsedOffer = {
   coordinates?: ParsedCoords;
   author?: ParsedAuthor;
 };
-
-type WithId<T> = T & { _id: Types.ObjectId };
 
 function isHeader(line: string): boolean {
   const lower = line.trim().toLowerCase();
@@ -103,10 +100,7 @@ function toStringArray(v: unknown): string[] {
 }
 
 export async function importTsv(filePath: string, mongoUri: string): Promise<void> {
-  const exists = await fs
-    .access(filePath)
-    .then(() => true)
-    .catch(() => false);
+  const exists = await fs.access(filePath).then(() => true).catch(() => false);
   if (!exists) {
     console.error(chalk.red(`Файл не найден: ${filePath}`));
     process.exitCode = 1;
@@ -149,15 +143,15 @@ export async function importTsv(filePath: string, mongoUri: string): Promise<voi
     const userAvatar = toStringSafe(raw.author?.avatarUrl);
     const userType = toStringSafe(raw.author?.type, 'regular') as UserDB['type'];
 
-    let user: WithId<UserDB> | null = await userRepo.findByEmail(userEmail);
-    if (!user) {
-      user = await userRepo.create({
+    const existing = await userRepo.findByEmail(userEmail);
+    const ensuredUser: WithId<UserDB> =
+      existing ??
+      (await userRepo.create({
         name: userName,
         email: userEmail,
         avatarUrl: userAvatar || undefined,
         type: userType
-      });
-    }
+      }));
 
     const title = toStringSafe(raw.title, 'Untitled offer');
     const description = toStringSafe(raw.description, 'No description');
@@ -193,16 +187,12 @@ export async function importTsv(filePath: string, mongoUri: string): Promise<voi
         maxAdults,
         price,
         amenities,
-        author: user._id,
+        author: ensuredUser._id,
         commentsCount,
         coordinates: { latitude, longitude }
       } as Partial<OfferDB>);
       imported += 1;
-      console.log(
-        `${chalk.bold(title)} ${chalk.gray(`[${city}]`)} ${chalk.yellow(`€${price}`)} ${chalk.gray(
-          `(${type}, rating ${rating})`
-        )}`
-      );
+      console.log(`${chalk.bold(title)} ${chalk.gray(`[${city}]`)} ${chalk.yellow(`€${price}`)} ${chalk.gray(`(${type}, rating ${rating})`)}`);
     } catch (e) {
       console.error(chalk.red((e as Error).message));
     }
