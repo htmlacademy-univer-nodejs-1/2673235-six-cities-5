@@ -2,11 +2,48 @@ import chalk from 'chalk';
 import fs from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import readline from 'node:readline';
+import { Types } from 'mongoose';
 import { parseTsvLine } from '../utils/tsv.js';
 import { container } from '../container/container.js';
 import { TYPES } from '../container/types.js';
 import { DatabaseService } from '../db/database.js';
 import { IUserRepository, IOfferRepository } from '../db/repositories/interfaces.js';
+import { UserDB } from '../db/models/user.js';
+import { OfferDB } from '../db/models/offer.js';
+
+type ParsedAuthor = {
+  name?: unknown;
+  email?: unknown;
+  avatarUrl?: unknown;
+  type?: unknown;
+};
+
+type ParsedCoords = {
+  latitude?: unknown;
+  longitude?: unknown;
+};
+
+type ParsedOffer = {
+  title?: unknown;
+  description?: unknown;
+  postDate?: unknown;
+  city?: unknown;
+  previewImage?: unknown;
+  photos?: unknown;
+  isPremium?: unknown;
+  isFavorite?: unknown;
+  rating?: unknown;
+  type?: unknown;
+  bedrooms?: unknown;
+  maxAdults?: unknown;
+  price?: unknown;
+  amenities?: unknown;
+  commentsCount?: unknown;
+  coordinates?: ParsedCoords;
+  author?: ParsedAuthor;
+};
+
+type WithId<T> = T & { _id: Types.ObjectId };
 
 function isHeader(line: string): boolean {
   const lower = line.trim().toLowerCase();
@@ -14,22 +51,32 @@ function isHeader(line: string): boolean {
 }
 
 function toNumberSafe(v: unknown, def = 0): number {
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return v;
+  }
   const n = Number(String(v ?? '').replace(',', '.').trim());
   return Number.isFinite(n) ? n : def;
 }
 
 function toDateSafe(v: unknown, def = new Date()): Date {
-  if (v instanceof Date && !isNaN(v.valueOf())) return v;
+  if (v instanceof Date && !isNaN(v.valueOf())) {
+    return v;
+  }
   const d = new Date(String(v ?? ''));
   return isNaN(d.valueOf()) ? def : d;
 }
 
 function toBoolSafe(v: unknown, def = false): boolean {
-  if (typeof v === 'boolean') return v;
+  if (typeof v === 'boolean') {
+    return v;
+  }
   const s = String(v ?? '').toLowerCase().trim();
-  if (s === 'true' || s === '1' || s === 'yes') return true;
-  if (s === 'false' || s === '0' || s === 'no') return false;
+  if (s === 'true' || s === '1' || s === 'yes') {
+    return true;
+  }
+  if (s === 'false' || s === '0' || s === 'no') {
+    return false;
+  }
   return def;
 }
 
@@ -39,15 +86,27 @@ function toStringSafe(v: unknown, def = ''): string {
 }
 
 function toStringArray(v: unknown): string[] {
-  if (Array.isArray(v)) return v.map((x) => String(x)).map((x) => x.trim()).filter(Boolean);
+  if (Array.isArray(v)) {
+    return v.map((x) => String(x).trim()).filter(Boolean);
+  }
   const s = String(v ?? '');
-  if (!s) return [];
-  const sep = s.includes(';') ? ';' : s.includes(',') ? ',' : ' ';
+  if (!s) {
+    return [];
+  }
+  let sep = ' ';
+  if (s.includes(';')) {
+    sep = ';';
+  } else if (s.includes(',')) {
+    sep = ',';
+  }
   return s.split(sep).map((x) => x.trim()).filter(Boolean);
 }
 
 export async function importTsv(filePath: string, mongoUri: string): Promise<void> {
-  const exists = await fs.access(filePath).then(() => true).catch(() => false);
+  const exists = await fs
+    .access(filePath)
+    .then(() => true)
+    .catch(() => false);
   if (!exists) {
     console.error(chalk.red(`Файл не найден: ${filePath}`));
     process.exitCode = 1;
@@ -73,66 +132,77 @@ export async function importTsv(filePath: string, mongoUri: string): Promise<voi
 
   for await (const line of rl) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (trimmed.startsWith('#')) continue;
-    if (isHeader(trimmed)) continue;
+    if (!trimmed) {
+      continue;
+    }
+    if (trimmed.startsWith('#')) {
+      continue;
+    }
+    if (isHeader(trimmed)) {
+      continue;
+    }
 
-    const raw = parseTsvLine(trimmed) as any;
+    const raw = parseTsvLine(trimmed) as ParsedOffer;
 
     const userEmail = toStringSafe(raw.author?.email);
     const userName = toStringSafe(raw.author?.name, 'Anonymous');
     const userAvatar = toStringSafe(raw.author?.avatarUrl);
-    const userType = toStringSafe(raw.author?.type, 'regular');
+    const userType = toStringSafe(raw.author?.type, 'regular') as UserDB['type'];
 
-    let user = await userRepo.findByEmail(userEmail);
+    let user: WithId<UserDB> | null = await userRepo.findByEmail(userEmail);
     if (!user) {
       user = await userRepo.create({
         name: userName,
         email: userEmail,
         avatarUrl: userAvatar || undefined,
-        type: userType as any
+        type: userType
       });
     }
 
     const title = toStringSafe(raw.title, 'Untitled offer');
     const description = toStringSafe(raw.description, 'No description');
     const postDate = toDateSafe(raw.postDate);
-    const city = toStringSafe(raw.city, 'Paris');
+    const city = toStringSafe(raw.city, 'Paris') as OfferDB['city'];
     const previewImage = toStringSafe(raw.previewImage, 'http://example.com/preview.jpg');
     const photos = toStringArray(raw.photos);
     const isPremium = toBoolSafe(raw.isPremium, false);
     const isFavorite = toBoolSafe(raw.isFavorite, false);
     const rating = toNumberSafe(raw.rating, 0);
-    const type = toStringSafe(raw.type, 'apartment');
+    const type = toStringSafe(raw.type, 'apartment') as OfferDB['type'];
     const bedrooms = toNumberSafe(raw.bedrooms, 1);
     const maxAdults = toNumberSafe(raw.maxAdults, 1);
     const price = toNumberSafe(raw.price, 100);
-    const amenities = toStringArray(raw.amenities);
+    const amenities = toStringArray(raw.amenities) as OfferDB['amenities'];
     const latitude = toNumberSafe(raw.coordinates?.latitude, 0);
     const longitude = toNumberSafe(raw.coordinates?.longitude, 0);
+    const commentsCount = toNumberSafe(raw.commentsCount, 0);
 
     try {
       await offerRepo.create({
         title,
         description,
         postDate,
-        city: city as any,
+        city,
         previewImage,
         photos,
         isPremium,
         isFavorite,
         rating,
-        type: type as any,
+        type,
         bedrooms,
         maxAdults,
         price,
-        amenities: amenities as any,
-        author: (user as any)._id,
-        commentsCount: toNumberSafe(raw.commentsCount, 0),
+        amenities,
+        author: user._id,
+        commentsCount,
         coordinates: { latitude, longitude }
-      });
+      } as Partial<OfferDB>);
       imported += 1;
-      console.log(`${chalk.bold(title)} ${chalk.gray(`[${city}]`)} ${chalk.yellow(`€${price}`)} ${chalk.gray(`(${type}, rating ${rating})`)}`);
+      console.log(
+        `${chalk.bold(title)} ${chalk.gray(`[${city}]`)} ${chalk.yellow(`€${price}`)} ${chalk.gray(
+          `(${type}, rating ${rating})`
+        )}`
+      );
     } catch (e) {
       console.error(chalk.red((e as Error).message));
     }
