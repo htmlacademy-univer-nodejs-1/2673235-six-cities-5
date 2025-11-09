@@ -1,0 +1,343 @@
+openapi: 3.0.3
+info:
+  title: Six Cities API (short)
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000/api/v1
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/UserPublic' } } } }
+        '409': { description: Conflict }
+  /auth/login:
+    post:
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthToken' } } } }
+        '401': { description: Unauthorized }
+  /auth/status:
+    get:
+      tags: [Auth]
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserPublic' } } } }
+        '401': { description: Unauthorized }
+
+  /offers:
+    get:
+      tags: [Offers]
+      parameters:
+        - $ref: '#/components/parameters/CityQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OfferListItem' }
+    post:
+      tags: [Offers]
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OfferCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/OfferFull' } } } }
+        '401': { description: Unauthorized }
+
+  /offers/{offerId}:
+    get:
+      tags: [Offers]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/OfferFull' } } } }
+        '404': { description: Not Found }
+    patch:
+      tags: [Offers]
+      security: [ { bearerAuth: [] } ]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OfferUpdate' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/OfferFull' } } } }
+        '401': { description: Unauthorized }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+    delete:
+      tags: [Offers]
+      security: [ { bearerAuth: [] } ]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      responses:
+        '204': { description: No Content }
+        '401': { description: Unauthorized }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+  /offers/premium:
+    get:
+      tags: [Offers]
+      parameters: [ { $ref: '#/components/parameters/CityRequired' } ]
+      responses:
+        '200':
+          description: Up to 3 premium
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OfferListItem' }
+
+  /offers/{offerId}/comments:
+    get:
+      tags: [Comments]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      responses:
+        '200':
+          description: Last 50
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Comment' }
+        '404': { description: Not Found }
+    post:
+      tags: [Comments]
+      security: [ { bearerAuth: [] } ]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CommentCreate' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } } }
+        '401': { description: Unauthorized }
+
+  /favorites:
+    get:
+      tags: [Favorites]
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200':
+          description: List of favorites
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OfferListItem' }
+        '401': { description: Unauthorized }
+  /favorites/{offerId}:
+    put:
+      tags: [Favorites]
+      security: [ { bearerAuth: [] } ]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      responses:
+        '204': { description: No Content }
+        '401': { description: Unauthorized }
+        '404': { description: Not Found }
+    delete:
+      tags: [Favorites]
+      security: [ { bearerAuth: [] } ]
+      parameters: [ { $ref: '#/components/parameters/OfferId' } ]
+      responses:
+        '204': { description: No Content }
+        '401': { description: Unauthorized }
+        '404': { description: Not Found }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    OfferId:
+      name: offerId
+      in: path
+      required: true
+      schema: { type: string }
+    CityQuery:
+      name: city
+      in: query
+      required: false
+      schema: { $ref: '#/components/schemas/City' }
+    CityRequired:
+      name: city
+      in: query
+      required: true
+      schema: { $ref: '#/components/schemas/City' }
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, default: 60, minimum: 1 }
+
+  schemas:
+    City:
+      type: string
+      enum: [Paris, Cologne, Brussels, Amsterdam, Hamburg, Dusseldorf]
+    HousingType:
+      type: string
+      enum: [apartment, house, room, hotel]
+    Amenity:
+      type: string
+      enum: [Breakfast, Air conditioning, Laptop friendly workspace, Baby seat, Washer, Towels, Fridge]
+    Coordinates:
+      type: object
+      properties:
+        latitude: { type: number }
+        longitude: { type: number }
+      required: [latitude, longitude]
+
+    UserPublic:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        avatarUrl: { type: string, format: uri, nullable: true }
+        type: { type: string, enum: [regular, pro] }
+    UserCreate:
+      type: object
+      required: [name, email, password, type]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string }
+        type: { type: string, enum: [regular, pro] }
+    LoginDto:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    AuthToken:
+      type: object
+      properties:
+        token: { type: string }
+
+    OfferListItem:
+      type: object
+      properties:
+        id: { type: string }
+        price: { type: integer }
+        title: { type: string }
+        type: { $ref: '#/components/schemas/HousingType' }
+        isFavorite: { type: boolean }
+        postDate: { type: string, format: date-time }
+        city: { $ref: '#/components/schemas/City' }
+        previewImage: { type: string, format: uri }
+        isPremium: { type: boolean }
+        rating: { type: number }
+        commentsCount: { type: integer }
+      required: [id, price, title, type, isFavorite, postDate, city, previewImage, isPremium, rating, commentsCount]
+
+    OfferFull:
+      allOf:
+        - $ref: '#/components/schemas/OfferListItem'
+        - type: object
+          properties:
+            description: { type: string }
+            photos:
+              type: array
+              minItems: 6
+              maxItems: 6
+              items: { type: string, format: uri }
+            bedrooms: { type: integer }
+            maxAdults: { type: integer }
+            amenities:
+              type: array
+              items: { $ref: '#/components/schemas/Amenity' }
+            author: { $ref: '#/components/schemas/UserPublic' }
+            coordinates: { $ref: '#/components/schemas/Coordinates' }
+          required: [description, photos, bedrooms, maxAdults, amenities, author, coordinates]
+
+    OfferCreate:
+      type: object
+      required: [title, description, postDate, city, previewImage, photos, isPremium, isFavorite, rating, type, bedrooms, maxAdults, price, amenities, coordinates]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        postDate: { type: string, format: date-time }
+        city: { $ref: '#/components/schemas/City' }
+        previewImage: { type: string, format: uri }
+        photos:
+          type: array
+          minItems: 6
+          maxItems: 6
+          items: { type: string, format: uri }
+        isPremium: { type: boolean }
+        isFavorite: { type: boolean }
+        rating: { type: number }
+        type: { $ref: '#/components/schemas/HousingType' }
+        bedrooms: { type: integer }
+        maxAdults: { type: integer }
+        price: { type: integer }
+        amenities:
+          type: array
+          items: { $ref: '#/components/schemas/Amenity' }
+        coordinates: { $ref: '#/components/schemas/Coordinates' }
+
+    OfferUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        postDate: { type: string, format: date-time }
+        city: { $ref: '#/components/schemas/City' }
+        previewImage: { type: string, format: uri }
+        photos:
+          type: array
+          items: { type: string, format: uri }
+        isPremium: { type: boolean }
+        isFavorite: { type: boolean }
+        rating: { type: number }
+        type: { $ref: '#/components/schemas/HousingType' }
+        bedrooms: { type: integer }
+        maxAdults: { type: integer }
+        price: { type: integer }
+        amenities:
+          type: array
+          items: { $ref: '#/components/schemas/Amenity' }
+        coordinates: { $ref: '#/components/schemas/Coordinates' }
+
+    Comment:
+      type: object
+      properties:
+        id: { type: string }
+        text: { type: string }
+        rating: { type: integer }
+        author: { $ref: '#/components/schemas/UserPublic' }
+        createdAt: { type: string, format: date-time }
+      required: [id, text, rating, author, createdAt]
+    CommentCreate:
+      type: object
+      required: [text, rating]
+      properties:
+        text: { type: string }
+        rating: { type: integer }
+
+security:
+  - bearerAuth: []
