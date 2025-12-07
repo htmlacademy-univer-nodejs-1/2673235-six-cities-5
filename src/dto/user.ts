@@ -1,13 +1,28 @@
-export interface UserRegisterDto {
-  name: string;
-  email: string;
-  password: string;
-  type: 'regular' | 'pro';
+import { IsEmail, IsIn, IsString, Length } from 'class-validator';
+
+export class UserRegisterDto {
+  @IsString()
+  @Length(1, 50)
+    name!: string;
+
+  @IsEmail()
+    email!: string;
+
+  @IsString()
+  @Length(6, 12)
+    password!: string;
+
+  @IsIn(['regular', 'pro'])
+    type!: 'regular' | 'pro';
 }
 
-export interface LoginDto {
-  email: string;
-  password: string;
+export class LoginDto {
+  @IsEmail()
+    email!: string;
+
+  @IsString()
+  @Length(6, 12)
+    password!: string;
 }
 
 export interface UserPublicDto {

@@ -4,7 +4,7 @@ export interface CommentDB {
   text: string;
   rating: number;
   offer: Types.ObjectId;
-  author: Types.ObjectId;
+  author?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }

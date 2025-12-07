@@ -9,6 +9,7 @@ import { FavoriteService } from '../services/favorite.js';
 import type { OfferDB } from '../db/models/offer.js';
 import type { OfferListItemDto } from '../dto/offer.js';
 import { HttpError } from '../errors/http-error.js';
+import { ValidateObjectIdMiddleware } from '../middlewares/validate-object-id.js';
 
 type OfferWithId = OfferDB & { _id?: unknown };
 
@@ -29,12 +30,14 @@ export class FavoriteController extends Controller {
     this.addRoute({
       method: 'put',
       path: '/:offerId',
+      middlewares: [new ValidateObjectIdMiddleware('offerId')],
       handlers: [asyncHandler(this.add.bind(this))]
     });
 
     this.addRoute({
       method: 'delete',
       path: '/:offerId',
+      middlewares: [new ValidateObjectIdMiddleware('offerId')],
       handlers: [asyncHandler(this.remove.bind(this))]
     });
   }
@@ -78,7 +81,10 @@ export class FavoriteController extends Controller {
       title: offer.title,
       type: offer.type,
       isFavorite: offer.isFavorite,
-      postDate: offer.postDate instanceof Date ? offer.postDate.toISOString() : String(offer.postDate),
+      postDate:
+        offer.postDate instanceof Date
+          ? offer.postDate.toISOString()
+          : String(offer.postDate),
       city: offer.city,
       previewImage: offer.previewImage,
       isPremium: offer.isPremium,

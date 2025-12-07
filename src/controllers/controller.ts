@@ -2,6 +2,7 @@ import { Router, type RequestHandler, type Response } from 'express';
 import { injectable } from 'inversify';
 import { StatusCodes } from 'http-status-codes';
 import { PinoLoggerService } from '../logger/logger.js';
+import type { Middleware } from '../middlewares/middleware.interface.js';
 
 export type HttpMethod = 'get' | 'post' | 'patch' | 'delete' | 'put';
 
@@ -9,6 +10,7 @@ export interface RouteConfig {
   method: HttpMethod;
   path: string;
   handlers: RequestHandler[];
+  middlewares?: Middleware[];
 }
 
 @injectable()
@@ -24,13 +26,19 @@ export abstract class Controller {
   }
 
   protected addRoute(config: RouteConfig): void {
-    const method = config.method;
-    const handlers = config.handlers;
+    const { method, path, handlers, middlewares } = config;
+
     if (!this.router[method]) {
       return;
     }
-    this.router[method](config.path, ...handlers);
-    this.logger.info(`Route registered: [${method.toUpperCase()}] ${this.basePath}${config.path}`);
+
+    const boundMiddlewares =
+      middlewares?.map((m) => m.execute.bind(m)) ?? [];
+
+    this.router[method](path, ...boundMiddlewares, ...handlers);
+    this.logger.info(
+      `Route registered: [${method.toUpperCase()}] ${this.basePath}${path}`
+    );
   }
 
   protected ok<T>(res: Response, dto: T): void {

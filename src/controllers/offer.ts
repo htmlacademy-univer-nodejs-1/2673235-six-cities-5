@@ -10,9 +10,12 @@ import { OfferService } from '../services/offer.js';
 import type { IUserRepository, WithId } from '../db/repositories/interfaces.js';
 import type { OfferDB } from '../db/models/offer.js';
 import type { UserDB } from '../db/models/user.js';
-import type { OfferCreateDto, OfferUpdateDto, OfferListItemDto, OfferFullDto } from '../dto/offer.js';
+import { OfferCreateDto, OfferUpdateDto } from '../dto/offer.js';
+import type { OfferListItemDto, OfferFullDto } from '../dto/offer.js';
 import type { UserPublicDto } from '../dto/user.js';
 import { HttpError } from '../errors/http-error.js';
+import { ValidateObjectIdMiddleware } from '../middlewares/validate-object-id.js';
+import { ValidateDtoMiddleware } from '../middlewares/validate-dto.js';
 
 type OfferWithId = OfferDB & { _id?: unknown };
 
@@ -34,6 +37,7 @@ export class OfferController extends Controller {
     this.addRoute({
       method: 'post',
       path: '/',
+      middlewares: [new ValidateDtoMiddleware(OfferCreateDto)],
       handlers: [asyncHandler(this.create.bind(this))]
     });
 
@@ -46,18 +50,24 @@ export class OfferController extends Controller {
     this.addRoute({
       method: 'get',
       path: '/:offerId',
+      middlewares: [new ValidateObjectIdMiddleware('offerId')],
       handlers: [asyncHandler(this.getById.bind(this))]
     });
 
     this.addRoute({
       method: 'patch',
       path: '/:offerId',
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new ValidateDtoMiddleware(OfferUpdateDto)
+      ],
       handlers: [asyncHandler(this.update.bind(this))]
     });
 
     this.addRoute({
       method: 'delete',
       path: '/:offerId',
+      middlewares: [new ValidateObjectIdMiddleware('offerId')],
       handlers: [asyncHandler(this.remove.bind(this))]
     });
   }
@@ -82,7 +92,10 @@ export class OfferController extends Controller {
     const payload = req.body as OfferCreateDto;
 
     if (!payload.authorId || !Types.ObjectId.isValid(payload.authorId)) {
-      throw new HttpError(StatusCodes.BAD_REQUEST, 'authorId is required and must be a valid ObjectId');
+      throw new HttpError(
+        StatusCodes.BAD_REQUEST,
+        'authorId is required and must be a valid ObjectId'
+      );
     }
 
     const authorObjectId = new Types.ObjectId(payload.authorId);
@@ -210,7 +223,10 @@ export class OfferController extends Controller {
       title: offer.title,
       type: offer.type,
       isFavorite: offer.isFavorite,
-      postDate: offer.postDate instanceof Date ? offer.postDate.toISOString() : String(offer.postDate),
+      postDate:
+        offer.postDate instanceof Date
+          ? offer.postDate.toISOString()
+          : String(offer.postDate),
       city: offer.city,
       previewImage: offer.previewImage,
       isPremium: offer.isPremium,

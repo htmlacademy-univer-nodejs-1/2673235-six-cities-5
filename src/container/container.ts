@@ -25,6 +25,7 @@ import { AuthController } from '../controllers/auth.js';
 import { OfferController } from '../controllers/offer.js';
 import { FavoriteController } from '../controllers/favorite.js';
 import { ExceptionFilter } from '../errors/exception-filter.js';
+import { CommentController } from '../controllers/comment.js';
 
 export const container = new Container({ defaultScope: 'Singleton' });
 
@@ -53,4 +54,9 @@ container.bind<FavoriteService>(TYPES.FavoriteService).to(FavoriteService);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<OfferController>(TYPES.OfferController).to(OfferController);
 container.bind<FavoriteController>(TYPES.FavoriteController).to(FavoriteController);
+container.bind<ExceptionFilter>(TYPES.ExceptionFilter).to(ExceptionFilter);
+container.bind<AuthController>(TYPES.AuthController).to(AuthController);
+container.bind<OfferController>(TYPES.OfferController).to(OfferController);
+container.bind<FavoriteController>(TYPES.FavoriteController).to(FavoriteController);
+container.bind<CommentController>(TYPES.CommentController).to(CommentController);
 container.bind<ExceptionFilter>(TYPES.ExceptionFilter).to(ExceptionFilter);

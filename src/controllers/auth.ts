@@ -7,8 +7,10 @@ import { Controller } from './controller.js';
 import { PinoLoggerService } from '../logger/logger.js';
 import type { IUserRepository, WithId } from '../db/repositories/interfaces.js';
 import type { UserDB } from '../db/models/user.js';
-import type { UserRegisterDto, LoginDto, UserPublicDto, AuthTokenDto } from '../dto/user.js';
+import { UserRegisterDto, LoginDto } from '../dto/user.js';
+import type { UserPublicDto, AuthTokenDto } from '../dto/user.js';
 import { HttpError } from '../errors/http-error.js';
+import { ValidateDtoMiddleware } from '../middlewares/validate-dto.js';
 
 @injectable()
 export class AuthController extends Controller {
@@ -21,12 +23,14 @@ export class AuthController extends Controller {
     this.addRoute({
       method: 'post',
       path: '/register',
+      middlewares: [new ValidateDtoMiddleware(UserRegisterDto)],
       handlers: [asyncHandler(this.register.bind(this))]
     });
 
     this.addRoute({
       method: 'post',
       path: '/login',
+      middlewares: [new ValidateDtoMiddleware(LoginDto)],
       handlers: [asyncHandler(this.login.bind(this))]
     });
 
