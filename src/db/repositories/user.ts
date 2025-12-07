@@ -11,12 +11,16 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(id: string | Types.ObjectId): Promise<WithId<UserDB> | null> {
-    const doc = await this.model.findById(id as any).lean();
+    const doc = await this.model
+      .findById(id)
+      .lean();
     return (doc as unknown as WithId<UserDB>) || null;
   }
 
   async findByEmail(email: string): Promise<WithId<UserDB> | null> {
-    const doc = await this.model.findOne({ email }).lean();
+    const doc = await this.model
+      .findOne({ email })
+      .lean();
     return (doc as unknown as WithId<UserDB>) || null;
   }
 }

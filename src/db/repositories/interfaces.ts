@@ -6,8 +6,9 @@ import { CommentDB } from '../models/comment.js';
 export type WithId<T> = T & { _id: Types.ObjectId };
 
 export interface IUserRepository {
-  findByEmail(email: string): Promise<WithId<UserDB> | null>;
   create(data: Partial<UserDB>): Promise<WithId<UserDB>>;
+  findById(id: string | Types.ObjectId): Promise<WithId<UserDB> | null>;
+  findByEmail(email: string): Promise<WithId<UserDB> | null>;
 }
 
 export interface IOfferRepository {
