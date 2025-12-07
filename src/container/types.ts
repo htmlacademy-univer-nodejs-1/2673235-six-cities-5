@@ -9,5 +9,9 @@ export const TYPES = {
   FavoriteRepository: Symbol.for('FavoriteRepository'),
   OfferService: Symbol.for('OfferService'),
   CommentService: Symbol.for('CommentService'),
-  FavoriteService: Symbol.for('FavoriteService')
+  FavoriteService: Symbol.for('FavoriteService'),
+  AuthController: Symbol.for('AuthController'),
+  OfferController: Symbol.for('OfferController'),
+  FavoriteController: Symbol.for('FavoriteController'),
+  ExceptionFilter: Symbol.for('ExceptionFilter')
 };

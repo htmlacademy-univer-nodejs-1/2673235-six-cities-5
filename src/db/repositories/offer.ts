@@ -31,13 +31,21 @@ export class OfferRepository implements IOfferRepository {
   }
 
   async listByIds(ids: (string | Types.ObjectId)[]): Promise<OfferDB[]> {
-    const oids = ids.map((x) => new Types.ObjectId(x as any));
-    const docs = await this.model.find({ _id: { $in: oids } }).lean();
+    if (!ids.length) {
+      return [];
+    }
+    const docs = await this.model
+      .find({ _id: { $in: ids } })
+      .lean();
     return docs as OfferDB[];
   }
 
   async listPremiumByCity(city: OfferDB['city'], limit: number): Promise<OfferDB[]> {
-    const docs = await this.model.find({ city, isPremium: true }).sort({ postDate: -1 }).limit(limit).lean();
+    const docs = await this.model
+      .find({ city, isPremium: true })
+      .sort({ postDate: -1 })
+      .limit(limit)
+      .lean();
     return docs as OfferDB[];
   }
 

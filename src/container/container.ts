@@ -12,10 +12,19 @@ import { UserRepository } from '../db/repositories/user.js';
 import { OfferRepository } from '../db/repositories/offer.js';
 import { CommentRepository } from '../db/repositories/comment.js';
 import { FavoriteRepository } from '../db/repositories/favorite.js';
-import { IUserRepository, IOfferRepository, ICommentRepository, IFavoriteRepository } from '../db/repositories/interfaces.js';
+import type {
+  IUserRepository,
+  IOfferRepository,
+  ICommentRepository,
+  IFavoriteRepository
+} from '../db/repositories/interfaces.js';
 import { OfferService } from '../services/offer.js';
 import { CommentService } from '../services/comment.js';
 import { FavoriteService } from '../services/favorite.js';
+import { AuthController } from '../controllers/auth.js';
+import { OfferController } from '../controllers/offer.js';
+import { FavoriteController } from '../controllers/favorite.js';
+import { ExceptionFilter } from '../errors/exception-filter.js';
 
 export const container = new Container({ defaultScope: 'Singleton' });
 
@@ -24,11 +33,24 @@ container.bind<ConfigService>(TYPES.Config).to(ConfigService);
 container.bind<Application>(TYPES.Application).to(Application);
 container.bind<DatabaseService>(TYPES.Database).to(DatabaseService);
 
-container.bind<IUserRepository>(TYPES.UserRepository).toDynamicValue(() => new UserRepository(UserModel));
-container.bind<IOfferRepository>(TYPES.OfferRepository).toDynamicValue(() => new OfferRepository(OfferModel));
-container.bind<ICommentRepository>(TYPES.CommentRepository).toDynamicValue(() => new CommentRepository(CommentModel));
-container.bind<IFavoriteRepository>(TYPES.FavoriteRepository).toDynamicValue(() => new FavoriteRepository(FavoriteModel));
+container.bind<IUserRepository>(TYPES.UserRepository).toDynamicValue(
+  () => new UserRepository(UserModel)
+);
+container.bind<IOfferRepository>(TYPES.OfferRepository).toDynamicValue(
+  () => new OfferRepository(OfferModel)
+);
+container.bind<ICommentRepository>(TYPES.CommentRepository).toDynamicValue(
+  () => new CommentRepository(CommentModel)
+);
+container.bind<IFavoriteRepository>(TYPES.FavoriteRepository).toDynamicValue(
+  () => new FavoriteRepository(FavoriteModel)
+);
 
 container.bind<OfferService>(TYPES.OfferService).to(OfferService);
 container.bind<CommentService>(TYPES.CommentService).to(CommentService);
 container.bind<FavoriteService>(TYPES.FavoriteService).to(FavoriteService);
+
+container.bind<AuthController>(TYPES.AuthController).to(AuthController);
+container.bind<OfferController>(TYPES.OfferController).to(OfferController);
+container.bind<FavoriteController>(TYPES.FavoriteController).to(FavoriteController);
+container.bind<ExceptionFilter>(TYPES.ExceptionFilter).to(ExceptionFilter);

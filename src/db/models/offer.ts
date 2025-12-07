@@ -41,7 +41,7 @@ const CoordinatesSchema = new Schema(
   { _id: false }
 );
 
-const offerDefinition: Record<string, unknown> = {
+const offerDefinition = {
   title: String,
   description: String,
   postDate: Date,
@@ -61,7 +61,6 @@ const offerDefinition: Record<string, unknown> = {
   coordinates: CoordinatesSchema
 };
 
-const OfferSchema = new Schema<any>(offerDefinition as any, { timestamps: true });
+const OfferSchema = new Schema<OfferDB>(offerDefinition, { timestamps: true });
 
-
-export const OfferModel = model('Offer', OfferSchema) as unknown as Model<OfferDB>;
+export const OfferModel: Model<OfferDB> = model<OfferDB>('Offer', OfferSchema);

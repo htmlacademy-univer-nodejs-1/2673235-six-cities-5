@@ -11,16 +11,24 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async findLastByOffer(offerId: string | Types.ObjectId, limit: number): Promise<CommentDB[]> {
-    const docs = await this.model.find({ offer: offerId }).sort({ createdAt: -1 }).limit(limit).lean();
+    const docs = await this.model
+      .find({ offer: offerId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
     return docs as CommentDB[];
   }
 
   async calcAvgAndCount(offerId: string | Types.ObjectId): Promise<{ avg: number; count: number }> {
+    const normalizedOfferId =
+      typeof offerId === 'string' ? new Types.ObjectId(offerId) : offerId;
+
     const res = await this.model.aggregate([
-      { $match: { offer: new Types.ObjectId(offerId as any) } },
+      { $match: { offer: normalizedOfferId } },
       { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } }
     ]);
-    const row = res[0] || { avg: 0, count: 0 };
+
+    const row = (res[0] as { avg?: number; count?: number }) || { avg: 0, count: 0 };
     return { avg: row.avg || 0, count: row.count || 0 };
   }
 

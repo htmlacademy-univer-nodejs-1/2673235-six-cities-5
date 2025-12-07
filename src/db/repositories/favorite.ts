@@ -18,7 +18,12 @@ export class FavoriteRepository implements IFavoriteRepository {
   }
 
   async findOfferIdsByUser(userId: string | Types.ObjectId): Promise<Types.ObjectId[]> {
-    const rows = await this.model.find({ user: userId }).select('offer -_id').lean();
-    return rows.map((r: any) => new Types.ObjectId(r.offer));
+    const rows = await this.model
+      .find({ user: userId })
+      .select('offer -_id')
+      .lean();
+
+    const typedRows = rows as Array<{ offer: Types.ObjectId }>;
+    return typedRows.map((row) => row.offer);
   }
 }

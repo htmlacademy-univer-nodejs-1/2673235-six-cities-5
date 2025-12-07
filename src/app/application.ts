@@ -1,18 +1,68 @@
 import { inject, injectable } from 'inversify';
+import express, { type Express } from 'express';
 import { TYPES } from '../container/types.js';
 import { PinoLoggerService } from '../logger/logger.js';
 import { ConfigService } from '../config/service.js';
+import { DatabaseService } from '../db/database.js';
+import { AuthController } from '../controllers/auth.js';
+import { OfferController } from '../controllers/offer.js';
+import { FavoriteController } from '../controllers/favorite.js';
+import { ExceptionFilter } from '../errors/exception-filter.js';
 
 @injectable()
 export class Application {
+  private readonly app: Express;
+
   constructor(
     @inject(TYPES.Logger) private readonly logger: PinoLoggerService,
-    @inject(TYPES.Config) private readonly config: ConfigService
-  ) {}
+    @inject(TYPES.Config) private readonly config: ConfigService,
+    @inject(TYPES.Database) private readonly database: DatabaseService,
+    @inject(TYPES.AuthController) private readonly authController: AuthController,
+    @inject(TYPES.OfferController) private readonly offerController: OfferController,
+    @inject(TYPES.FavoriteController) private readonly favoriteController: FavoriteController,
+    @inject(TYPES.ExceptionFilter) private readonly exceptionFilter: ExceptionFilter
+  ) {
+    this.app = express();
+  }
+
+  private registerMiddlewares(): void {
+    this.app.use(express.json());
+  }
+
+  private registerRoutes(): void {
+    const apiPrefix = '/api/v1';
+
+    this.app.use(`${apiPrefix}${this.authController.basePath}`, this.authController.router);
+    this.app.use(`${apiPrefix}${this.offerController.basePath}`, this.offerController.router);
+    this.app.use(
+      `${apiPrefix}${this.favoriteController.basePath}`,
+      this.favoriteController.router
+    );
+  }
+
+  private registerExceptionFilters(): void {
+    this.app.use(this.exceptionFilter.catch.bind(this.exceptionFilter));
+  }
+
+  private async initDb(): Promise<void> {
+    const host = this.config.getDbHost();
+    if (!host) {
+      this.logger.warn('DB_HOST is not set, DB connection is skipped');
+      return;
+    }
+    const uri = `mongodb://${host}:27017/six-cities`;
+    await this.database.connect(uri);
+  }
 
   async init(): Promise<void> {
-    this.logger.info('App runs');
+    await this.initDb();
+    this.registerMiddlewares();
+    this.registerRoutes();
+    this.registerExceptionFilters();
+
     const port = this.config.getPort();
-    this.logger.info(`Port: ${port}`);
+    this.app.listen(port, () => {
+      this.logger.info(`HTTP server listening on port ${port}`);
+    });
   }
 }
