@@ -14,9 +14,12 @@ type RawConfig = {
   db: {
     host: string;
   };
+  upload: {
+    dir: string;
+  };
 };
 
-type ConfigKey = 'app.port' | 'app.salt' | 'db.host';
+type ConfigKey = 'app.port' | 'app.salt' | 'db.host' | 'upload.dir';
 
 @injectable()
 export class ConfigService {
@@ -42,6 +45,14 @@ export class ConfigService {
         default: '',
         env: 'DB_HOST'
       }
+    },
+    upload: {
+      dir: {
+        doc: 'Directory for user-uploaded files',
+        format: String,
+        default: 'upload',
+        env: 'UPLOAD_DIR'
+      }
     }
   });
 
@@ -63,5 +74,9 @@ export class ConfigService {
 
   getSalt(): string {
     return this.conf.get('app.salt');
+  }
+
+  getUploadDir(): string {
+    return this.conf.get('upload.dir');
   }
 }

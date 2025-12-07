@@ -11,12 +11,16 @@ import { UserRegisterDto, LoginDto } from '../dto/user.js';
 import type { UserPublicDto, AuthTokenDto } from '../dto/user.js';
 import { HttpError } from '../errors/http-error.js';
 import { ValidateDtoMiddleware } from '../middlewares/validate-dto.js';
+import { ValidateObjectIdMiddleware } from '../middlewares/validate-object-id.js';
+import { UploadFileMiddleware } from '../middlewares/upload-file.js';
+import { ConfigService } from '../config/service.js';
 
 @injectable()
 export class AuthController extends Controller {
   constructor(
     @inject(TYPES.Logger) logger: PinoLoggerService,
-    @inject(TYPES.UserRepository) private readonly users: IUserRepository
+    @inject(TYPES.UserRepository) private readonly users: IUserRepository,
+    @inject(TYPES.Config) private readonly config: ConfigService
   ) {
     super(logger, '/auth');
 
@@ -24,7 +28,7 @@ export class AuthController extends Controller {
       method: 'post',
       path: '/register',
       middlewares: [new ValidateDtoMiddleware(UserRegisterDto)],
-      handlers: [asyncHandler(this.register.bind(this))]
+      handlers: [asyncHandler(this.create.bind(this))]
     });
 
     this.addRoute({
@@ -39,9 +43,19 @@ export class AuthController extends Controller {
       path: '/status',
       handlers: [asyncHandler(this.status.bind(this))]
     });
+
+    this.addRoute({
+      method: 'post',
+      path: '/:userId/avatar',
+      middlewares: [
+        new ValidateObjectIdMiddleware('userId'),
+        new UploadFileMiddleware('avatar', this.config.getUploadDir())
+      ],
+      handlers: [asyncHandler(this.uploadAvatar.bind(this))]
+    });
   }
 
-  private async register(req: Request, res: Response, _next: NextFunction): Promise<void> {
+  private async create(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const payload = req.body as UserRegisterDto;
 
     const existing = await this.users.findByEmail(payload.email);
@@ -93,6 +107,24 @@ export class AuthController extends Controller {
     }
 
     const dto = this.toUserPublicDto(user);
+    this.ok(res, dto);
+  }
+
+  private async uploadAvatar(req: Request, res: Response, _next: NextFunction): Promise<void> {
+    const { userId } = req.params;
+
+    if (!req.file) {
+      throw new HttpError(StatusCodes.BAD_REQUEST, 'Avatar file is required');
+    }
+
+    const avatarUrl = `/static/${req.file.filename}`;
+
+    const updated = await this.users.updateAvatar(userId, avatarUrl);
+    if (!updated) {
+      throw new HttpError(StatusCodes.NOT_FOUND, 'User not found');
+    }
+
+    const dto = this.toUserPublicDto(updated);
     this.ok(res, dto);
   }
 
