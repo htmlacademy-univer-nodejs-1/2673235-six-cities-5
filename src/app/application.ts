@@ -7,6 +7,7 @@ import { DatabaseService } from '../db/database.js';
 import { AuthController } from '../controllers/auth.js';
 import { OfferController } from '../controllers/offer.js';
 import { FavoriteController } from '../controllers/favorite.js';
+import { CommentController } from '../controllers/comment.js';
 import { ExceptionFilter } from '../errors/exception-filter.js';
 
 @injectable()
@@ -20,6 +21,7 @@ export class Application {
     @inject(TYPES.AuthController) private readonly authController: AuthController,
     @inject(TYPES.OfferController) private readonly offerController: OfferController,
     @inject(TYPES.FavoriteController) private readonly favoriteController: FavoriteController,
+    @inject(TYPES.CommentController) private readonly commentController: CommentController,
     @inject(TYPES.ExceptionFilter) private readonly exceptionFilter: ExceptionFilter
   ) {
     this.app = express();
@@ -37,6 +39,10 @@ export class Application {
     this.app.use(
       `${apiPrefix}${this.favoriteController.basePath}`,
       this.favoriteController.router
+    );
+    this.app.use(
+      `${apiPrefix}${this.commentController.basePath}`,
+      this.commentController.router
     );
   }
 

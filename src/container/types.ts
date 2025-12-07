@@ -13,5 +13,6 @@ export const TYPES = {
   AuthController: Symbol.for('AuthController'),
   OfferController: Symbol.for('OfferController'),
   FavoriteController: Symbol.for('FavoriteController'),
+  CommentController: Symbol.for('CommentController'),
   ExceptionFilter: Symbol.for('ExceptionFilter')
 };
