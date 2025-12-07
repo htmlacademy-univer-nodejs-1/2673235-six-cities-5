@@ -9,6 +9,10 @@ export interface IUserRepository {
   create(data: Partial<UserDB>): Promise<WithId<UserDB>>;
   findById(id: string | Types.ObjectId): Promise<WithId<UserDB> | null>;
   findByEmail(email: string): Promise<WithId<UserDB> | null>;
+  updateAvatar(
+    id: string | Types.ObjectId,
+    avatarUrl: string
+  ): Promise<WithId<UserDB> | null>;
 }
 
 export interface IOfferRepository {

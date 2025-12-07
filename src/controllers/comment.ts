@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
 import { inject, injectable } from 'inversify';
-import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import { TYPES } from '../container/types.js';
 import { Controller } from './controller.js';
@@ -13,10 +12,10 @@ import type { CommentDB } from '../db/models/comment.js';
 import type { UserDB } from '../db/models/user.js';
 import type { CommentDto } from '../dto/comment.js';
 import type { UserPublicDto } from '../dto/user.js';
-import { HttpError } from '../errors/http-error.js';
 import { ValidateObjectIdMiddleware } from '../middlewares/validate-object-id.js';
 import { ValidateDtoMiddleware } from '../middlewares/validate-dto.js';
 import { CommentCreateDto } from '../dto/comment.js';
+import { DocumentExistsMiddleware } from '../middlewares/document-exists.js';
 
 type CommentWithId = CommentDB & { _id?: unknown };
 
@@ -33,7 +32,10 @@ export class CommentController extends Controller {
     this.addRoute({
       method: 'get',
       path: '/:offerId/comments',
-      middlewares: [new ValidateObjectIdMiddleware('offerId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new DocumentExistsMiddleware('offerId', this.offers, 'Offer not found')
+      ],
       handlers: [asyncHandler(this.index.bind(this))]
     });
 
@@ -42,7 +44,8 @@ export class CommentController extends Controller {
       path: '/:offerId/comments',
       middlewares: [
         new ValidateObjectIdMiddleware('offerId'),
-        new ValidateDtoMiddleware(CommentCreateDto)
+        new ValidateDtoMiddleware(CommentCreateDto),
+        new DocumentExistsMiddleware('offerId', this.offers, 'Offer not found')
       ],
       handlers: [asyncHandler(this.create.bind(this))]
     });
@@ -51,11 +54,6 @@ export class CommentController extends Controller {
   private async index(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const { offerId } = req.params;
 
-    const offer = await this.offers.getById(offerId);
-    if (!offer) {
-      throw new HttpError(StatusCodes.NOT_FOUND, 'Offer not found');
-    }
-
     const items = await this.comments.findLastByOffer(offerId, 50);
     const dtos = await Promise.all(items.map((c) => this.toCommentDto(c)));
     this.ok(res, dtos);
@@ -63,12 +61,6 @@ export class CommentController extends Controller {
 
   private async create(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const { offerId } = req.params;
-
-    const offer = await this.offers.getById(offerId);
-    if (!offer) {
-      throw new HttpError(StatusCodes.NOT_FOUND, 'Offer not found');
-    }
-
     const payload = req.body as CommentCreateDto;
 
     const data: Partial<CommentDB> = {

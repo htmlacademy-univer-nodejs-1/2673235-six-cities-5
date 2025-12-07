@@ -6,10 +6,12 @@ import { TYPES } from '../container/types.js';
 import { Controller } from './controller.js';
 import { PinoLoggerService } from '../logger/logger.js';
 import { FavoriteService } from '../services/favorite.js';
+import { OfferService } from '../services/offer.js';
 import type { OfferDB } from '../db/models/offer.js';
 import type { OfferListItemDto } from '../dto/offer.js';
 import { HttpError } from '../errors/http-error.js';
 import { ValidateObjectIdMiddleware } from '../middlewares/validate-object-id.js';
+import { DocumentExistsMiddleware } from '../middlewares/document-exists.js';
 
 type OfferWithId = OfferDB & { _id?: unknown };
 
@@ -17,7 +19,8 @@ type OfferWithId = OfferDB & { _id?: unknown };
 export class FavoriteController extends Controller {
   constructor(
     @inject(TYPES.Logger) logger: PinoLoggerService,
-    @inject(TYPES.FavoriteService) private readonly favorites: FavoriteService
+    @inject(TYPES.FavoriteService) private readonly favorites: FavoriteService,
+    @inject(TYPES.OfferService) private readonly offers: OfferService
   ) {
     super(logger, '/favorites');
 
@@ -30,14 +33,20 @@ export class FavoriteController extends Controller {
     this.addRoute({
       method: 'put',
       path: '/:offerId',
-      middlewares: [new ValidateObjectIdMiddleware('offerId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new DocumentExistsMiddleware<OfferDB>('offerId', this.offers, 'Offer not found')
+      ],
       handlers: [asyncHandler(this.add.bind(this))]
     });
 
     this.addRoute({
       method: 'delete',
       path: '/:offerId',
-      middlewares: [new ValidateObjectIdMiddleware('offerId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new DocumentExistsMiddleware<OfferDB>('offerId', this.offers, 'Offer not found')
+      ],
       handlers: [asyncHandler(this.remove.bind(this))]
     });
   }

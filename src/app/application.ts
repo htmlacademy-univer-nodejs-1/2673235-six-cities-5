@@ -29,6 +29,11 @@ export class Application {
 
   private registerMiddlewares(): void {
     this.app.use(express.json());
+
+    const uploadDir = this.config.getUploadDir();
+    if (uploadDir) {
+      this.app.use('/static', express.static(uploadDir));
+    }
   }
 
   private registerRoutes(): void {

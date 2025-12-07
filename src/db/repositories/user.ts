@@ -23,4 +23,14 @@ export class UserRepository implements IUserRepository {
       .lean();
     return (doc as unknown as WithId<UserDB>) || null;
   }
+
+  async updateAvatar(
+    id: string | Types.ObjectId,
+    avatarUrl: string
+  ): Promise<WithId<UserDB> | null> {
+    const doc = await this.model
+      .findByIdAndUpdate(id, { avatarUrl }, { new: true })
+      .lean();
+    return (doc as unknown as WithId<UserDB>) || null;
+  }
 }
